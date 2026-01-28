@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ArranchamentoEntry, DiasSemana, diasSemanaLabels } from "@/types/arranchamento";
-import { Trash2, Check, X } from "lucide-react";
+import { Trash2, Check, X, FileDown, FileSpreadsheet } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 interface ArranchamentoTableProps {
   entries: ArranchamentoEntry[];
@@ -25,6 +28,55 @@ const CheckIcon = ({ checked }: { checked: boolean }) => {
 export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProps) {
   const dias = Object.keys(diasSemanaLabels) as (keyof DiasSemana)[];
 
+  const exportToPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape" });
+    doc.setFontSize(16);
+    doc.text("Arranchamento da Base Administrativa", 14, 15);
+    
+    const headers = [
+      "P/G", "Nome de Guerra",
+      ...dias.map(d => `Café ${diasSemanaLabels[d].slice(0, 3)}`),
+      ...dias.map(d => `Almoço ${diasSemanaLabels[d].slice(0, 3)}`)
+    ];
+
+    const data = entries.map(entry => [
+      entry.pg,
+      entry.nomeGuerra,
+      ...dias.map(d => entry.cafeManha[d] ? "✓" : ""),
+      ...dias.map(d => entry.almoco[d] ? "✓" : "")
+    ]);
+
+    autoTable(doc, {
+      head: [headers],
+      body: data,
+      startY: 25,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [75, 83, 32] }
+    });
+
+    doc.save("arranchamento.pdf");
+  };
+
+  const exportToExcel = () => {
+    const data = entries.map(entry => ({
+      "P/G": entry.pg,
+      "Nome de Guerra": entry.nomeGuerra,
+      ...dias.reduce((acc, d) => ({
+        ...acc,
+        [`Café ${diasSemanaLabels[d]}`]: entry.cafeManha[d] ? "Sim" : "Não"
+      }), {}),
+      ...dias.reduce((acc, d) => ({
+        ...acc,
+        [`Almoço ${diasSemanaLabels[d]}`]: entry.almoco[d] ? "Sim" : "Não"
+      }), {})
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Arranchamento");
+    XLSX.writeFile(wb, "arranchamento.xlsx");
+  };
+
   if (entries.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -35,7 +87,18 @@ export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProp
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="space-y-4">
+      <div className="flex justify-end gap-2 px-4 pt-4">
+        <Button variant="outline" size="sm" onClick={exportToPDF} className="gap-2">
+          <FileDown className="h-4 w-4" />
+          PDF
+        </Button>
+        <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-2">
+          <FileSpreadsheet className="h-4 w-4" />
+          Excel
+        </Button>
+      </div>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="table-header hover:bg-primary">
@@ -99,6 +162,7 @@ export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProp
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }
