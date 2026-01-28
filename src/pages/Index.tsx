@@ -6,7 +6,7 @@ import { ArranchamentoTable } from "@/components/ArranchamentoTable";
 import { useArranchamento } from "@/hooks/useArranchamento";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoginForm } from "@/components/LoginForm";
-import { ClipboardList, FileSpreadsheet, Trash2, LogOut } from "lucide-react";
+import { ClipboardList, FileSpreadsheet, Trash2, LogOut, Lock } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,7 @@ import {
 import logo from "@/assets/logo-6bec.png";
 
 const Index = () => {
-  const [showTable, setShowTable] = useState(false);
+  const [currentView, setCurrentView] = useState<"form" | "table" | "login">("form");
   const { entries, addEntry, deleteEntry, clearAll } = useArranchamento();
   const { isAuthenticated, logout } = useAuth();
 
@@ -37,20 +37,20 @@ const Index = () => {
         </div>
 
         {/* Toggle Buttons */}
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center gap-3 flex-wrap">
           <Button
-            variant={!showTable ? "default" : "secondary"}
-            onClick={() => setShowTable(false)}
+            variant={currentView === "form" ? "default" : "secondary"}
+            onClick={() => setCurrentView("form")}
             className="gap-2"
           >
             <ClipboardList className="h-4 w-4" />
             Formulário
           </Button>
-          {isAuthenticated && (
+          {isAuthenticated ? (
             <>
               <Button
-                variant={showTable ? "default" : "secondary"}
-                onClick={() => setShowTable(true)}
+                variant={currentView === "table" ? "default" : "secondary"}
+                onClick={() => setCurrentView("table")}
                 className="gap-2"
               >
                 <FileSpreadsheet className="h-4 w-4" />
@@ -63,20 +63,38 @@ const Index = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  setCurrentView("form");
+                }}
                 className="gap-2"
               >
                 <LogOut className="h-4 w-4" />
                 Sair
               </Button>
             </>
+          ) : (
+            <Button
+              variant={currentView === "login" ? "default" : "secondary"}
+              onClick={() => setCurrentView("login")}
+              className="gap-2"
+            >
+              <Lock className="h-4 w-4" />
+              Login Admin
+            </Button>
           )}
         </div>
 
         {/* Content */}
-        {!showTable ? (
-          <ArranchamentoForm onSubmit={addEntry} />
-        ) : isAuthenticated ? (
+        {currentView === "form" && <ArranchamentoForm onSubmit={addEntry} />}
+        
+        {currentView === "login" && !isAuthenticated && (
+          <div className="flex justify-center">
+            <LoginForm onSuccess={() => setCurrentView("table")} />
+          </div>
+        )}
+        
+        {currentView === "table" && isAuthenticated && (
           <Card className="form-container">
             <CardHeader className="form-header flex-row items-center justify-between">
               <CardTitle className="text-xl font-bold tracking-tight">
@@ -119,10 +137,6 @@ const Index = () => {
               <ArranchamentoTable entries={entries} onDelete={deleteEntry} />
             </CardContent>
           </Card>
-        ) : (
-          <div className="flex justify-center">
-            <LoginForm />
-          </div>
         )}
       </div>
     </div>

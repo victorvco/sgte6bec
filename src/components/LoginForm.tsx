@@ -7,7 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export const LoginForm = () => {
+interface LoginFormProps {
+  onSuccess?: () => void;
+}
+
+export const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
@@ -16,7 +20,9 @@ export const LoginForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const success = login(username, password);
-    if (!success) {
+    if (success) {
+      onSuccess?.();
+    } else {
       toast({
         title: "Erro de autenticação",
         description: "Usuário ou senha incorretos.",
