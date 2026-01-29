@@ -46,8 +46,8 @@ export function ArranchamentoTable({ entries, onDelete, loading }: Arranchamento
       return [
         entry.graduacao,
         entry.nome_guerra,
-        ...dias.map(d => cafeManha[d] ? "✓" : ""),
-        ...dias.map(d => almoco[d] ? "✓" : "")
+        ...dias.map(d => cafeManha[d] ? "✓" : "✗"),
+        ...dias.map(d => almoco[d] ? "✓" : "✗")
       ];
     });
 
