@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      arranchamento_entries: {
+        Row: {
+          almoco_quarta: boolean
+          almoco_quinta: boolean
+          almoco_segunda: boolean
+          almoco_sexta: boolean
+          almoco_terca: boolean
+          cafe_quarta: boolean
+          cafe_quinta: boolean
+          cafe_segunda: boolean
+          cafe_sexta: boolean
+          cafe_terca: boolean
+          created_at: string
+          graduacao: string
+          id: string
+          nome: string
+          nome_guerra: string
+          om: string
+        }
+        Insert: {
+          almoco_quarta?: boolean
+          almoco_quinta?: boolean
+          almoco_segunda?: boolean
+          almoco_sexta?: boolean
+          almoco_terca?: boolean
+          cafe_quarta?: boolean
+          cafe_quinta?: boolean
+          cafe_segunda?: boolean
+          cafe_sexta?: boolean
+          cafe_terca?: boolean
+          created_at?: string
+          graduacao: string
+          id?: string
+          nome: string
+          nome_guerra: string
+          om: string
+        }
+        Update: {
+          almoco_quarta?: boolean
+          almoco_quinta?: boolean
+          almoco_segunda?: boolean
+          almoco_sexta?: boolean
+          almoco_terca?: boolean
+          cafe_quarta?: boolean
+          cafe_quinta?: boolean
+          cafe_segunda?: boolean
+          cafe_sexta?: boolean
+          cafe_terca?: boolean
+          created_at?: string
+          graduacao?: string
+          id?: string
+          nome?: string
+          nome_guerra?: string
+          om?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

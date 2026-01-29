@@ -22,7 +22,7 @@ import logo from "@/assets/logo-6bec.png";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<"form" | "table" | "login">("form");
-  const { entries, addEntry, deleteEntry, clearAll } = useArranchamento();
+  const { entries, loading, addEntry, deleteEntry, clearAll } = useArranchamento();
   const { isAuthenticated, logout } = useAuth();
 
   return (
@@ -134,7 +134,7 @@ const Index = () => {
               )}
             </CardHeader>
             <CardContent className="p-0">
-              <ArranchamentoTable entries={entries} onDelete={deleteEntry} />
+              <ArranchamentoTable entries={entries} onDelete={deleteEntry} loading={loading} />
             </CardContent>
           </Card>
         )}

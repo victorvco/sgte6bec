@@ -4,12 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArranchamentoEntry, DiasSemana, diasSemanaLabels } from "@/types/arranchamento";
+import { ArranchamentoEntry, DiasSemana, diasSemanaLabels, formToDbEntry } from "@/types/arranchamento";
 import { toast } from "@/hooks/use-toast";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 
 interface ArranchamentoFormProps {
-  onSubmit: (entry: ArranchamentoEntry) => void;
+  onSubmit: (entry: Omit<ArranchamentoEntry, "id" | "created_at">) => Promise<boolean>;
 }
 
 const initialDias: DiasSemana = {
@@ -21,10 +21,13 @@ const initialDias: DiasSemana = {
 };
 
 export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
-  const [pg, setPg] = useState("");
+  const [nome, setNome] = useState("");
   const [nomeGuerra, setNomeGuerra] = useState("");
+  const [graduacao, setGraduacao] = useState("");
+  const [om, setOm] = useState("");
   const [cafeManha, setCafeManha] = useState<DiasSemana>({ ...initialDias });
   const [almoco, setAlmoco] = useState<DiasSemana>({ ...initialDias });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleCafeManhaChange = (dia: keyof DiasSemana) => {
     setCafeManha((prev) => ({ ...prev, [dia]: !prev[dia] }));
@@ -34,39 +37,47 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
     setAlmoco((prev) => ({ ...prev, [dia]: !prev[dia] }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!pg.trim() || !nomeGuerra.trim()) {
+    if (!graduacao.trim() || !nomeGuerra.trim()) {
       toast({
         title: "Campos obrigatórios",
-        description: "Por favor, preencha P/G e Nome de Guerra.",
+        description: "Por favor, preencha Graduação e Nome de Guerra.",
         variant: "destructive",
       });
       return;
     }
 
-    const entry: ArranchamentoEntry = {
-      id: crypto.randomUUID(),
-      pg: pg.trim(),
-      nomeGuerra: nomeGuerra.trim(),
+    setSubmitting(true);
+
+    const entry = formToDbEntry(
+      nome.trim(),
+      nomeGuerra.trim(),
+      graduacao.trim(),
+      om.trim(),
       cafeManha,
-      almoco,
-      createdAt: new Date(),
-    };
+      almoco
+    );
 
-    onSubmit(entry);
+    const success = await onSubmit(entry);
 
-    // Reset form
-    setPg("");
-    setNomeGuerra("");
-    setCafeManha({ ...initialDias });
-    setAlmoco({ ...initialDias });
+    if (success) {
+      // Reset form
+      setNome("");
+      setNomeGuerra("");
+      setGraduacao("");
+      setOm("");
+      setCafeManha({ ...initialDias });
+      setAlmoco({ ...initialDias });
 
-    toast({
-      title: "Registro salvo!",
-      description: "Arranchamento registrado com sucesso.",
-    });
+      toast({
+        title: "Registro salvo!",
+        description: "Arranchamento registrado com sucesso.",
+      });
+    }
+
+    setSubmitting(false);
   };
 
   return (
@@ -78,15 +89,29 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
       </CardHeader>
       <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* P/G Field */}
+          {/* Nome Completo Field */}
           <div className="space-y-2">
-            <Label htmlFor="pg" className="text-sm font-medium">
-              P/G <span className="text-destructive">*</span>
+            <Label htmlFor="nome" className="text-sm font-medium">
+              Nome Completo
             </Label>
             <Input
-              id="pg"
-              value={pg}
-              onChange={(e) => setPg(e.target.value)}
+              id="nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Seu nome completo"
+              className="bg-background"
+            />
+          </div>
+
+          {/* Graduação Field */}
+          <div className="space-y-2">
+            <Label htmlFor="graduacao" className="text-sm font-medium">
+              Graduação <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="graduacao"
+              value={graduacao}
+              onChange={(e) => setGraduacao(e.target.value)}
               placeholder="Ex: Sgt, Cb, Sd..."
               className="bg-background"
             />
@@ -102,6 +127,20 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
               value={nomeGuerra}
               onChange={(e) => setNomeGuerra(e.target.value)}
               placeholder="Seu nome de guerra"
+              className="bg-background"
+            />
+          </div>
+
+          {/* OM Field */}
+          <div className="space-y-2">
+            <Label htmlFor="om" className="text-sm font-medium">
+              OM (Organização Militar)
+            </Label>
+            <Input
+              id="om"
+              value={om}
+              onChange={(e) => setOm(e.target.value)}
+              placeholder="Ex: 6º BEC"
               className="bg-background"
             />
           </div>
@@ -150,9 +189,13 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
             </div>
           </div>
 
-          <Button type="submit" className="w-full gap-2">
-            <Send className="h-4 w-4" />
-            Enviar
+          <Button type="submit" className="w-full gap-2" disabled={submitting}>
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {submitting ? "Enviando..." : "Enviar"}
           </Button>
         </form>
       </CardContent>
