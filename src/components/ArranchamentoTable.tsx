@@ -7,8 +7,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArranchamentoEntry, DiasSemana, diasSemanaLabels } from "@/types/arranchamento";
-import { Trash2, Check, X, FileDown, FileSpreadsheet } from "lucide-react";
+import { ArranchamentoEntry, DiasSemana, diasSemanaLabels, getCafeManha, getAlmoco } from "@/types/arranchamento";
+import { Trash2, Check, X, FileDown, FileSpreadsheet, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -16,6 +16,7 @@ import * as XLSX from "xlsx";
 interface ArranchamentoTableProps {
   entries: ArranchamentoEntry[];
   onDelete: (id: string) => void;
+  loading?: boolean;
 }
 
 const CheckIcon = ({ checked }: { checked: boolean }) => {
@@ -25,7 +26,7 @@ const CheckIcon = ({ checked }: { checked: boolean }) => {
   return <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />;
 };
 
-export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProps) {
+export function ArranchamentoTable({ entries, onDelete, loading }: ArranchamentoTableProps) {
   const dias = Object.keys(diasSemanaLabels) as (keyof DiasSemana)[];
 
   const exportToPDF = () => {
@@ -34,17 +35,22 @@ export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProp
     doc.text("Arranchamento da Base Administrativa", 14, 15);
     
     const headers = [
-      "P/G", "Nome de Guerra",
+      "Grad", "Nome de Guerra", "OM",
       ...dias.map(d => `Café ${diasSemanaLabels[d].slice(0, 3)}`),
       ...dias.map(d => `Almoço ${diasSemanaLabels[d].slice(0, 3)}`)
     ];
 
-    const data = entries.map(entry => [
-      entry.pg,
-      entry.nomeGuerra,
-      ...dias.map(d => entry.cafeManha[d] ? "✓" : ""),
-      ...dias.map(d => entry.almoco[d] ? "✓" : "")
-    ]);
+    const data = entries.map(entry => {
+      const cafeManha = getCafeManha(entry);
+      const almoco = getAlmoco(entry);
+      return [
+        entry.graduacao,
+        entry.nome_guerra,
+        entry.om || "-",
+        ...dias.map(d => cafeManha[d] ? "✓" : ""),
+        ...dias.map(d => almoco[d] ? "✓" : "")
+      ];
+    });
 
     autoTable(doc, {
       head: [headers],
@@ -58,24 +64,39 @@ export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProp
   };
 
   const exportToExcel = () => {
-    const data = entries.map(entry => ({
-      "P/G": entry.pg,
-      "Nome de Guerra": entry.nomeGuerra,
-      ...dias.reduce((acc, d) => ({
-        ...acc,
-        [`Café ${diasSemanaLabels[d]}`]: entry.cafeManha[d] ? "Sim" : "Não"
-      }), {}),
-      ...dias.reduce((acc, d) => ({
-        ...acc,
-        [`Almoço ${diasSemanaLabels[d]}`]: entry.almoco[d] ? "Sim" : "Não"
-      }), {})
-    }));
+    const data = entries.map(entry => {
+      const cafeManha = getCafeManha(entry);
+      const almoco = getAlmoco(entry);
+      return {
+        "Graduação": entry.graduacao,
+        "Nome de Guerra": entry.nome_guerra,
+        "Nome Completo": entry.nome || "-",
+        "OM": entry.om || "-",
+        ...dias.reduce((acc, d) => ({
+          ...acc,
+          [`Café ${diasSemanaLabels[d]}`]: cafeManha[d] ? "Sim" : "Não"
+        }), {}),
+        ...dias.reduce((acc, d) => ({
+          ...acc,
+          [`Almoço ${diasSemanaLabels[d]}`]: almoco[d] ? "Sim" : "Não"
+        }), {})
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Arranchamento");
     XLSX.writeFile(wb, "arranchamento.xlsx");
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Carregando registros...</span>
+      </div>
+    );
+  }
 
   if (entries.length === 0) {
     return (
@@ -102,8 +123,9 @@ export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProp
       <Table>
         <TableHeader>
           <TableRow className="table-header hover:bg-primary">
-            <TableHead className="text-primary-foreground font-semibold">P/G</TableHead>
+            <TableHead className="text-primary-foreground font-semibold">Grad</TableHead>
             <TableHead className="text-primary-foreground font-semibold">Nome de Guerra</TableHead>
+            <TableHead className="text-primary-foreground font-semibold">OM</TableHead>
             <TableHead colSpan={5} className="text-center text-primary-foreground font-semibold border-l border-primary-foreground/20">
               Café da Manhã
             </TableHead>
@@ -115,6 +137,7 @@ export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProp
             </TableHead>
           </TableRow>
           <TableRow className="bg-secondary hover:bg-secondary">
+            <TableHead></TableHead>
             <TableHead></TableHead>
             <TableHead></TableHead>
             {dias.map((dia) => (
@@ -131,35 +154,40 @@ export function ArranchamentoTable({ entries, onDelete }: ArranchamentoTableProp
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.map((entry, index) => (
-            <TableRow 
-              key={entry.id}
-              className={index % 2 === 0 ? "bg-card" : "bg-muted/30"}
-            >
-              <TableCell className="table-cell font-medium">{entry.pg}</TableCell>
-              <TableCell className="table-cell">{entry.nomeGuerra}</TableCell>
-              {dias.map((dia) => (
-                <TableCell key={`cafe-${entry.id}-${dia}`} className="table-cell text-center px-2 border-l border-border first:border-l-0">
-                  <CheckIcon checked={entry.cafeManha[dia]} />
+          {entries.map((entry, index) => {
+            const cafeManha = getCafeManha(entry);
+            const almoco = getAlmoco(entry);
+            return (
+              <TableRow 
+                key={entry.id}
+                className={index % 2 === 0 ? "bg-card" : "bg-muted/30"}
+              >
+                <TableCell className="table-cell font-medium">{entry.graduacao}</TableCell>
+                <TableCell className="table-cell">{entry.nome_guerra}</TableCell>
+                <TableCell className="table-cell">{entry.om || "-"}</TableCell>
+                {dias.map((dia) => (
+                  <TableCell key={`cafe-${entry.id}-${dia}`} className="table-cell text-center px-2 border-l border-border first:border-l-0">
+                    <CheckIcon checked={cafeManha[dia]} />
+                  </TableCell>
+                ))}
+                {dias.map((dia) => (
+                  <TableCell key={`almoco-${entry.id}-${dia}`} className="table-cell text-center px-2 border-l border-border">
+                    <CheckIcon checked={almoco[dia]} />
+                  </TableCell>
+                ))}
+                <TableCell className="table-cell text-center border-l border-border">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(entry.id)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
-              ))}
-              {dias.map((dia) => (
-                <TableCell key={`almoco-${entry.id}-${dia}`} className="table-cell text-center px-2 border-l border-border">
-                  <CheckIcon checked={entry.almoco[dia]} />
-                </TableCell>
-              ))}
-              <TableCell className="table-cell text-center border-l border-border">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(entry.id)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       </div>
