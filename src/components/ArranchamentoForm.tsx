@@ -21,10 +21,8 @@ const initialDias: DiasSemana = {
 };
 
 export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
-  const [nome, setNome] = useState("");
   const [nomeGuerra, setNomeGuerra] = useState("");
   const [graduacao, setGraduacao] = useState("");
-  const [om, setOm] = useState("");
   const [cafeManha, setCafeManha] = useState<DiasSemana>({ ...initialDias });
   const [almoco, setAlmoco] = useState<DiasSemana>({ ...initialDias });
   const [submitting, setSubmitting] = useState(false);
@@ -52,10 +50,8 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
     setSubmitting(true);
 
     const entry = formToDbEntry(
-      nome.trim(),
       nomeGuerra.trim(),
       graduacao.trim(),
-      om.trim(),
       cafeManha,
       almoco
     );
@@ -64,10 +60,8 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
 
     if (success) {
       // Reset form
-      setNome("");
       setNomeGuerra("");
       setGraduacao("");
-      setOm("");
       setCafeManha({ ...initialDias });
       setAlmoco({ ...initialDias });
 
@@ -89,20 +83,6 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
       </CardHeader>
       <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nome Completo Field */}
-          <div className="space-y-2">
-            <Label htmlFor="nome" className="text-sm font-medium">
-              Nome Completo
-            </Label>
-            <Input
-              id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Seu nome completo"
-              className="bg-background"
-            />
-          </div>
-
           {/* Graduação Field */}
           <div className="space-y-2">
             <Label htmlFor="graduacao" className="text-sm font-medium">
@@ -127,20 +107,6 @@ export function ArranchamentoForm({ onSubmit }: ArranchamentoFormProps) {
               value={nomeGuerra}
               onChange={(e) => setNomeGuerra(e.target.value)}
               placeholder="Seu nome de guerra"
-              className="bg-background"
-            />
-          </div>
-
-          {/* OM Field */}
-          <div className="space-y-2">
-            <Label htmlFor="om" className="text-sm font-medium">
-              OM (Organização Militar)
-            </Label>
-            <Input
-              id="om"
-              value={om}
-              onChange={(e) => setOm(e.target.value)}
-              placeholder="Ex: 6º BEC"
               className="bg-background"
             />
           </div>
