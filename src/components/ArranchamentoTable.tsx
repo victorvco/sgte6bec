@@ -35,7 +35,7 @@ export function ArranchamentoTable({ entries, onDelete, loading }: Arranchamento
     doc.text("Arranchamento da Base Administrativa", 14, 15);
     
     const headers = [
-      "Grad", "Nome de Guerra", "OM",
+      "Grad", "Nome de Guerra",
       ...dias.map(d => `Café ${diasSemanaLabels[d].slice(0, 3)}`),
       ...dias.map(d => `Almoço ${diasSemanaLabels[d].slice(0, 3)}`)
     ];
@@ -46,7 +46,6 @@ export function ArranchamentoTable({ entries, onDelete, loading }: Arranchamento
       return [
         entry.graduacao,
         entry.nome_guerra,
-        entry.om || "-",
         ...dias.map(d => cafeManha[d] ? "✓" : ""),
         ...dias.map(d => almoco[d] ? "✓" : "")
       ];
@@ -70,8 +69,6 @@ export function ArranchamentoTable({ entries, onDelete, loading }: Arranchamento
       return {
         "Graduação": entry.graduacao,
         "Nome de Guerra": entry.nome_guerra,
-        "Nome Completo": entry.nome || "-",
-        "OM": entry.om || "-",
         ...dias.reduce((acc, d) => ({
           ...acc,
           [`Café ${diasSemanaLabels[d]}`]: cafeManha[d] ? "Sim" : "Não"
@@ -125,7 +122,6 @@ export function ArranchamentoTable({ entries, onDelete, loading }: Arranchamento
           <TableRow className="table-header hover:bg-primary">
             <TableHead className="text-primary-foreground font-semibold">Grad</TableHead>
             <TableHead className="text-primary-foreground font-semibold">Nome de Guerra</TableHead>
-            <TableHead className="text-primary-foreground font-semibold">OM</TableHead>
             <TableHead colSpan={5} className="text-center text-primary-foreground font-semibold border-l border-primary-foreground/20">
               Café da Manhã
             </TableHead>
@@ -137,7 +133,6 @@ export function ArranchamentoTable({ entries, onDelete, loading }: Arranchamento
             </TableHead>
           </TableRow>
           <TableRow className="bg-secondary hover:bg-secondary">
-            <TableHead></TableHead>
             <TableHead></TableHead>
             <TableHead></TableHead>
             {dias.map((dia) => (
@@ -164,7 +159,6 @@ export function ArranchamentoTable({ entries, onDelete, loading }: Arranchamento
               >
                 <TableCell className="table-cell font-medium">{entry.graduacao}</TableCell>
                 <TableCell className="table-cell">{entry.nome_guerra}</TableCell>
-                <TableCell className="table-cell">{entry.om || "-"}</TableCell>
                 {dias.map((dia) => (
                   <TableCell key={`cafe-${entry.id}-${dia}`} className="table-cell text-center px-2 border-l border-border first:border-l-0">
                     <CheckIcon checked={cafeManha[dia]} />

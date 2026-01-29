@@ -1,9 +1,7 @@
 export interface ArranchamentoEntry {
   id: string;
-  nome: string;
   nome_guerra: string;
   graduacao: string;
-  om: string;
   cafe_segunda: boolean;
   cafe_terca: boolean;
   cafe_quarta: boolean;
@@ -36,18 +34,14 @@ export const diasSemanaLabels: Record<keyof DiasSemana, string> = {
 
 // Convert form data to database format
 export function formToDbEntry(
-  nome: string,
   nomeGuerra: string,
   graduacao: string,
-  om: string,
   cafeManha: DiasSemana,
   almoco: DiasSemana
 ): Omit<ArranchamentoEntry, 'id' | 'created_at'> {
   return {
-    nome,
     nome_guerra: nomeGuerra,
     graduacao,
-    om,
     cafe_segunda: cafeManha.segunda,
     cafe_terca: cafeManha.terca,
     cafe_quarta: cafeManha.quarta,

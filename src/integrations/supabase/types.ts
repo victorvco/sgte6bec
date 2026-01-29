@@ -29,9 +29,7 @@ export type Database = {
           created_at: string
           graduacao: string
           id: string
-          nome: string
           nome_guerra: string
-          om: string
         }
         Insert: {
           almoco_quarta?: boolean
@@ -47,9 +45,7 @@ export type Database = {
           created_at?: string
           graduacao: string
           id?: string
-          nome: string
           nome_guerra: string
-          om: string
         }
         Update: {
           almoco_quarta?: boolean
@@ -65,9 +61,7 @@ export type Database = {
           created_at?: string
           graduacao?: string
           id?: string
-          nome?: string
           nome_guerra?: string
-          om?: string
         }
         Relationships: []
       }
